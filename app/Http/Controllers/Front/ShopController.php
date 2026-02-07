@@ -11,14 +11,14 @@ class ShopController extends Controller
     public function index()
     {
         $products = Product::orderBy('created_at','desc')->paginate(6);
-        $random = Product::orderByRaw("RAND()")->get();
+        $random = Product::inRandomOrder()->get();
         return view('front.shop.index', compact('products', 'random'));
     }
 
     public function show($id)
     {
         $product = Product::find($id);
-        $random = Product::orderByRaw("RAND()")->get();
+        $random = Product::inRandomOrder()->get();
         return view('front.shop.single.index', compact('product', 'random'));
     }
 }
