@@ -19,7 +19,6 @@ class CartController extends Controller
         $carts = Cart::where('id_user', Auth::user()->id)->join('products', 'products.id', '=', 'carts.id_product')
             ->select('carts.*', 'products.name', 'products.price', 'products.new_price', 'products.img', 'products.category')->get();
 
-        // return $carts;
         return view('front.cart.index', compact('carts'));
     }
 
@@ -27,7 +26,6 @@ class CartController extends Controller
     {
         $status = Cart::where('id_user', Auth::user()->id)->Where('id_product', $id)->first();
         $product = Product::find($id);
-        // return $product;
         if ($status) {
             $status->update([
                 'qty' => $status->qty + $request->qty,
@@ -42,13 +40,11 @@ class CartController extends Controller
             ]);
         }
 
-        // return $cart;
         return redirect()->back()->with('danger', 'Artikel Berhasil Dihapus');
     }
 
     public function delete($id)
     {
-        // return $id;
         $cart = Cart::where('id', $id)->where('id_user', Auth::user()->id)->first();
         if ($cart) {
             $cart->delete();
