@@ -13,6 +13,7 @@
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
         "laravel/ui": "^4.6",
+        "mews/purifier": "^3.4",
         "rtconner/laravel-tagging": "^4.1"
     },
     "require-dev": {
