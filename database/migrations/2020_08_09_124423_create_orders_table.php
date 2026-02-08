@@ -17,6 +17,7 @@ class CreateOrdersTable extends Migration
             $table->increments('id');
             $table->string('code')->unique();
             $table->integer('id_user')->unsigned();
+            $table->integer('id_shipping')->unsigned();
             $table->integer('total');
             $table->string('status_product')->default('Proccess');
             $table->string('status_user')->default('Proccess');
