@@ -27,6 +27,11 @@ class CartController extends Controller
     {
         $status = Cart::where('id_user', Auth::user()->id)->Where('id_product', $id)->first();
         $product = Product::find($id);
+
+        if (! $product) {
+            abort(404);
+        }
+
         // return $product;
         if ($status) {
             $status->update([
