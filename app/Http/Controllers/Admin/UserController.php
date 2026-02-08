@@ -29,23 +29,22 @@ class UserController extends Controller
         $shippings = Shipping::where('id_user', $user->id)->latest()->get();
         return view('admin.user.detail',compact('user','shippings'));
     }
-    public function shippingSearch(Request $request , $id)
+    public function shippingSearch(Request $request, $id)
     {
         $user = User::find($id);
         $search = $request->search;
-        $result = Shipping::where('id_user',$user->id)->first();
-        if($result){
-            $shippings = Shipping::where('company_name', 'like', "%" . $search . "%")
-            ->orWhere('country', 'like', "%" . $search . "%")
-            ->orWhere('name', 'like', "%" . $search . "%")
-            ->orWhere('address', 'like', "%" . $search . "%")
-            ->orWhere('state', 'like', "%" . $search . "%")
-            ->orWhere('zip', 'like', "%" . $search . "%")
-            ->orWhere('email', 'like', "%" . $search . "%")
-            ->orWhere('phone', 'like', "%" . $search . "%")->get();
-        }else{
-            $shippings = Shipping::where('id_user',$user->id)->get();
-        }
-        return view('admin.user.detail',compact('user','shippings','search'));
+        $shippings = Shipping::where('id_user', $user->id)
+            ->where(function ($query) use ($search) {
+                $query->where('company_name', 'like', "%" . $search . "%")
+                    ->orWhere('country', 'like', "%" . $search . "%")
+                    ->orWhere('name', 'like', "%" . $search . "%")
+                    ->orWhere('address', 'like', "%" . $search . "%")
+                    ->orWhere('province', 'like', "%" . $search . "%")
+                    ->orWhere('zip', 'like', "%" . $search . "%")
+                    ->orWhere('email', 'like', "%" . $search . "%")
+                    ->orWhere('phone', 'like', "%" . $search . "%");
+            })->get();
+
+        return view('admin.user.detail', compact('user', 'shippings', 'search'));
     }
 }
