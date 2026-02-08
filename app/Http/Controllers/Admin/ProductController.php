@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Product;
-use File;
-use Image;
+use App\Services\ProductImageService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function __construct()
+    protected $productImageService;
+
+    public function __construct(ProductImageService $productImageService)
     {
+        $this->productImageService = $productImageService;
         $products = Product::orderBy('created_at', 'desc')->paginate(18);
     }
 
@@ -53,49 +55,8 @@ class ProductController extends Controller
         ]);
 
 
-        $image = $request->file('img');
-        $filename = \Carbon\Carbon::now()->timestamp . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+        $filename = $this->productImageService->handleImageUpload($request->file('img'), $request->category);
 
-
-        // Thumbnail Image
-        $destinationPath = public_path('asset/'.$request->category.'/thumbnail');
-        File::exists($destinationPath) or File::makeDirectory($destinationPath, 0777, true, true);
-        $canvas = Image::canvas(500, 800);
-
-        $img = Image::make($image->path());
-        $img->resize(400, 400, function ($constraint) {
-            $constraint->aspectRatio();
-        });
-        $canvas->insert($img, 'center')->save($destinationPath.'/'.$filename);
-
-        // Single Image
-        $destinationPath = public_path('asset/'.$request->category.'/single');
-        File::exists($destinationPath) or File::makeDirectory($destinationPath, 0777, true, true);
-        $img = Image::make($image->path());
-        $img->resize(500, 500, function ($constraint) {
-            $constraint->aspectRatio();
-        })->save($destinationPath.'/'.$filename);
-
-        //////// 285
-        $destinationPath = public_path('asset/'.$request->category.'/285');
-        File::exists($destinationPath) or File::makeDirectory($destinationPath, 0777, true, true);
-        $img = Image::make($image->path());
-        $img->resize(285, 400, function ($constraint) {
-            $constraint->aspectRatio();
-        })->save($destinationPath.'/'.$filename);
-
-
-        // Original Image
-        $destinationPath = public_path('asset/'.$request->category.'/');
-        $image->move($destinationPath, $filename);
-
-        //
-
-        // $image = $request->file('img');
-        // $filename = \Carbon\Carbon::now()->timestamp . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-        // $image->resize(100, 100, function ($constraint) {
-        //     $constraint->aspectRatio();
-        // })->move(public_path('asset/'.$request->category.'/'), $filename);
         $product = Product::create([
             'name' => $request->name,
             'category' => $request->category,
@@ -143,53 +104,9 @@ class ProductController extends Controller
             'img' => 'image|max:2048'
         ]);
         if ($request->hasFile('img')) {
-            File::delete(public_path('asset/'.$product->category.'/thumbnail/'). $product->img);
-            File::delete(public_path('asset/'.$product->category.'/285/'). $product->img);
-            File::delete(public_path('asset/'.$product->category.'/'). $product->img);
+            $this->productImageService->deleteImages($product->category, $product->img);
+            $filename = $this->productImageService->handleImageUpload($request->file('img'), $request->category);
 
-            $image = $request->file('img');
-            $filename = \Carbon\Carbon::now()->timestamp . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-
-
-            // Thumbnail Image
-            $destinationPath = public_path('asset/'.$request->category.'/thumbnail');
-
-            File::exists($destinationPath) or File::makeDirectory($destinationPath, 0777, true, true);
-
-            $canvas = Image::canvas(500, 800);
-
-            $img = Image::make($image->path());
-            $img->resize(400, 400, function ($constraint) {
-            $constraint->aspectRatio();
-            });
-            // $canvas->save($destinationPath.'/'.$filename);
-            $canvas->insert($img, 'center')->save($destinationPath.'/'.$filename);
-
-            // 285
-            $destinationPath = public_path('asset/'.$request->category.'/285');
-            File::exists($destinationPath) or File::makeDirectory($destinationPath, 0777, true, true);
-            $img = Image::make($image->path());
-            $img->resize(285, 400, function ($constraint) {
-                $constraint->aspectRatio();
-            })->save($destinationPath.'/'.$filename);
-
-            // Single Image
-            $destinationPath = public_path('asset/'.$request->category.'/single');
-            File::exists($destinationPath) or File::makeDirectory($destinationPath, 0777, true, true);
-            $img = Image::make($image->path());
-            $img->resize(500,500, function ($constraint) {
-                $constraint->aspectRatio();
-            })->save($destinationPath.'/'.$filename);
-
-
-            // Original Image
-            $destinationPath = public_path('asset/'.$request->category.'/');
-            $image->move($destinationPath, $filename);
-
-
-            // $image = $request->file('img');
-            // $filename = \Carbon\Carbon::now()->timestamp . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            // $image->move(public_path('asset/'.$request->category.'/'), $filename);
             $product->update([
                 'img' => $filename,
             ]);
