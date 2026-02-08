@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Product;
 use File;
-use Image;
 use Illuminate\Http\Request;
+use Image;
 
 class ProductController extends Controller
 {
@@ -17,28 +17,27 @@ class ProductController extends Controller
     public function index()
     {
         $products = Product::orderBy('created_at', 'desc')->paginate(18);
+
         return view('admin.product.index', compact('products'));
-        // ->with('no', (request()->input('page', 1) - 1) * 5)
     }
 
     public function search(Request $request)
     {
         $search = $request->search;
-        $result = Product::where('name', 'like', "%" . $search . "%")
-        ->orWhere('price', 'like', "%" . $search . "%")
-        ->orWhere('category', 'like', "%" . $search . "%")
-        ->orWhere('status', 'like', "%" . $search . "%")
-        ->orderBy('created_at', 'desc')->paginate(18);
+        $result = Product::where('name', 'like', '%'.$search.'%')
+            ->orWhere('price', 'like', '%'.$search.'%')
+            ->orWhere('category', 'like', '%'.$search.'%')
+            ->orWhere('status', 'like', '%'.$search.'%')
+            ->orderBy('created_at', 'desc')->paginate(18);
         $products = Product::orderBy('created_at', 'desc')->paginate(18);
-        // dd($result);
-        return view('admin.product.index', compact('result','products'));
+
+        return view('admin.product.index', compact('result', 'products'));
     }
 
     public function create()
     {
         return view('admin.product.actions.input');
     }
-
 
     public function store(Request $request)
     {
@@ -49,13 +48,11 @@ class ProductController extends Controller
             'spec' => 'required|min:3',
             'qty' => 'required|integer',
             'desc' => 'required',
-            'img' => 'required|image|max:2048'
+            'img' => 'required|image|max:2048',
         ]);
 
-
         $image = $request->file('img');
-        $filename = \Carbon\Carbon::now()->timestamp . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-
+        $filename = \Carbon\Carbon::now()->timestamp.'_'.uniqid().'.'.$image->getClientOriginalExtension();
 
         // Thumbnail Image
         $destinationPath = public_path('asset/'.$request->category.'/thumbnail');
@@ -76,7 +73,7 @@ class ProductController extends Controller
             $constraint->aspectRatio();
         })->save($destinationPath.'/'.$filename);
 
-        //////// 285
+        // ////// 285
         $destinationPath = public_path('asset/'.$request->category.'/285');
         File::exists($destinationPath) or File::makeDirectory($destinationPath, 0777, true, true);
         $img = Image::make($image->path());
@@ -84,18 +81,10 @@ class ProductController extends Controller
             $constraint->aspectRatio();
         })->save($destinationPath.'/'.$filename);
 
-
         // Original Image
         $destinationPath = public_path('asset/'.$request->category.'/');
         $image->move($destinationPath, $filename);
 
-        //
-
-        // $image = $request->file('img');
-        // $filename = \Carbon\Carbon::now()->timestamp . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-        // $image->resize(100, 100, function ($constraint) {
-        //     $constraint->aspectRatio();
-        // })->move(public_path('asset/'.$request->category.'/'), $filename);
         $product = Product::create([
             'name' => $request->name,
             'category' => $request->category,
@@ -106,27 +95,24 @@ class ProductController extends Controller
             'color' => $request->color,
             'img' => $filename,
         ]);
-        $tags = explode(",", $request->color);
+        $tags = explode(',', $request->color);
         $product->tag($tags);
 
-        // Product::create($request->all());
         return redirect(route('products.index'));
     }
-
 
     public function show(Product $product)
     {
         //
     }
 
-
     public function edit($id)
     {
         $products = Product::all();
         $product = $products->find($id);
+
         return view('admin.product.actions.edit', compact('product'));
     }
-
 
     public function update(Request $request, $id)
     {
@@ -140,16 +126,15 @@ class ProductController extends Controller
             'qty' => 'required|integer',
             'desc' => 'required',
             'color' => 'required',
-            'img' => 'image|max:2048'
+            'img' => 'image|max:2048',
         ]);
         if ($request->hasFile('img')) {
-            File::delete(public_path('asset/'.$product->category.'/thumbnail/'). $product->img);
-            File::delete(public_path('asset/'.$product->category.'/285/'). $product->img);
-            File::delete(public_path('asset/'.$product->category.'/'). $product->img);
+            File::delete(public_path('asset/'.$product->category.'/thumbnail/').$product->img);
+            File::delete(public_path('asset/'.$product->category.'/285/').$product->img);
+            File::delete(public_path('asset/'.$product->category.'/').$product->img);
 
             $image = $request->file('img');
-            $filename = \Carbon\Carbon::now()->timestamp . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-
+            $filename = \Carbon\Carbon::now()->timestamp.'_'.uniqid().'.'.$image->getClientOriginalExtension();
 
             // Thumbnail Image
             $destinationPath = public_path('asset/'.$request->category.'/thumbnail');
@@ -160,9 +145,8 @@ class ProductController extends Controller
 
             $img = Image::make($image->path());
             $img->resize(400, 400, function ($constraint) {
-            $constraint->aspectRatio();
+                $constraint->aspectRatio();
             });
-            // $canvas->save($destinationPath.'/'.$filename);
             $canvas->insert($img, 'center')->save($destinationPath.'/'.$filename);
 
             // 285
@@ -177,19 +161,14 @@ class ProductController extends Controller
             $destinationPath = public_path('asset/'.$request->category.'/single');
             File::exists($destinationPath) or File::makeDirectory($destinationPath, 0777, true, true);
             $img = Image::make($image->path());
-            $img->resize(500,500, function ($constraint) {
+            $img->resize(500, 500, function ($constraint) {
                 $constraint->aspectRatio();
             })->save($destinationPath.'/'.$filename);
-
 
             // Original Image
             $destinationPath = public_path('asset/'.$request->category.'/');
             $image->move($destinationPath, $filename);
 
-
-            // $image = $request->file('img');
-            // $filename = \Carbon\Carbon::now()->timestamp . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            // $image->move(public_path('asset/'.$request->category.'/'), $filename);
             $product->update([
                 'img' => $filename,
             ]);
@@ -204,7 +183,7 @@ class ProductController extends Controller
             'desc' => clean($request->desc),
             'color' => $request->color,
         ]);
-        $tags = explode(",", $request->color);
+        $tags = explode(',', $request->color);
         $product->tag($tags);
 
         return redirect(route('products.index'));
@@ -214,14 +193,16 @@ class ProductController extends Controller
     {
         $product = Product::find($id);
         $product->update([
-            'status' => 'Trash'
+            'status' => 'Trash',
         ]);
+
         return redirect(route('products.index'));
     }
 
     public function destroy($id)
     {
         Product::find($id)->delete();
+
         return redirect()->back();
     }
 }
