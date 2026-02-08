@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Front;
 
 use App\Models\Order;
 use App\Models\Cart;
-use App\Models\orderDetail;
+use App\Models\OrderDetail;
 use App\Models\Shipping;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -50,7 +50,7 @@ class OrderController extends Controller
         ->select('carts.*','products.name','products.price','products.new_price','products.img','products.category');
         $carts = $all_cart->get();
         foreach($carts as $cart){
-            orderDetail::create([
+            OrderDetail::create([
                 'id_order' => $order->id,
                 'id_user' => $userId,
                 'id_product' => $cart->id_product,
