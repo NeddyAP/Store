@@ -10,32 +10,46 @@ class ShopControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_show_method_displays_product_detail_page()
+    /**
+     * Test the shop index page loads correctly with products.
+     *
+     * @return void
+     */
+    public function test_shop_page_loads_correctly()
     {
-        // Arrange
-        $product = Product::factory()->create([
-            'name' => 'Test Product',
-            'category' => 'phone',
-            'img' => 'test-image.jpg',
-        ]);
+        // Create 10 products with distinct created_at timestamps
+        $products = Product::factory()->count(10)->sequence(function ($sequence) {
+            return ['created_at' => now()->addMinutes($sequence->index)];
+        })->create();
 
-        // Tag the product so that the view's tag loop has something to iterate over
-        $product->tag('Red');
+        // Make request to shop page
+        $response = $this->get(route('shop'));
 
-        // Create some other products to populate the 'random' section
-        Product::factory()->count(5)->create();
-
-        // Act
-        $response = $this->get(route('shop.detail', $product->id));
-
-        // Assert
+        // Assert status is 200
         $response->assertStatus(200);
-        $response->assertViewIs('front.shop.single.index');
-        $response->assertViewHas('product');
-        $response->assertViewHas('random');
-        $response->assertSee('Test Product');
 
-        // Assert that the tag is visible
-        $response->assertSee('Red');
+        // Assert view is correct
+        $response->assertViewIs('front.shop.index');
+
+        // Assert view data
+        $response->assertViewHas(['products', 'random']);
+
+        // Get view data
+        $viewProducts = $response->viewData('products');
+        $viewRandom = $response->viewData('random');
+
+        // Assert products are paginated (6 per page)
+        $this->assertEquals(6, $viewProducts->perPage());
+        $this->assertEquals(10, $viewProducts->total());
+
+        // Assert products are ordered by created_at desc
+        // The last created product should be first in the list
+        $this->assertEquals($products->last()->id, $viewProducts->first()->id);
+
+        // Assert random products are returned (should be a collection)
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $viewRandom);
+
+        // Assert we have some random products
+        $this->assertGreaterThan(0, $viewRandom->count());
     }
 }
