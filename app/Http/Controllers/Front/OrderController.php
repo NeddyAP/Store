@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Front;
 
-use App\Models\Order;
 use App\Models\Cart;
+use App\Models\Order;
 use App\Models\orderDetail;
 use App\Models\Shipping;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -17,11 +17,11 @@ class OrderController extends Controller
         $this->middleware('auth');
     }
 
-    public function create(Request $request ,$id)
+    public function create(Request $request, $id)
     {
         $userId = Auth::id();
 
-        #Shipping
+        // Shipping
         $shipping = Shipping::create([
             'id_user' => $userId,
             'country' => $request->country,
@@ -35,7 +35,7 @@ class OrderController extends Controller
             'notes' => $request->notes ? strip_tags($request->notes) : null,
         ]);
 
-        #Order
+        // Order
         $order = Order::create([
             'code' => 'TCP-'.Str::random(5).now()->format('-mdY'),
             'total' => $request->total,
@@ -45,11 +45,10 @@ class OrderController extends Controller
             'status_user' => 'Proccess',
         ]);
 
-        #Order Details
-        $all_cart = Cart::where('id_user', $userId)->join('products','products.id','=','carts.id_product')
-        ->select('carts.*','products.name','products.price','products.new_price','products.img','products.category');
+        // Order Details
+        $all_cart = Cart::forUser($userId);
         $carts = $all_cart->get();
-        foreach($carts as $cart){
+        foreach ($carts as $cart) {
             orderDetail::create([
                 'id_order' => $order->id,
                 'id_user' => $userId,
@@ -58,11 +57,12 @@ class OrderController extends Controller
                 'qty' => $cart->qty,
                 'total' => $cart->total,
             ]);
-        };
+        }
 
         $shipping->save();
         $order->save();
         $all_cart->delete();
+
         return view('front.order.thankyou');
     }
 }
