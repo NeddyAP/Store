@@ -102,7 +102,7 @@ class ProductController extends Controller
             'price' => $request->price,
             'spec' => $request->spec,
             'qty' => $request->qty,
-            'desc' => $request->desc,
+            'desc' => clean($request->desc),
             'color' => $request->color,
             'img' => $filename,
         ]);
@@ -201,7 +201,7 @@ class ProductController extends Controller
             'new_price' => $request->new_price,
             'spec' => $request->spec,
             'qty' => $request->qty,
-            'desc' => $request->desc,
+            'desc' => clean($request->desc),
             'color' => $request->color,
         ]);
         $tags = explode(",", $request->color);
