@@ -103,7 +103,7 @@
                                 <div class="form-group col-12">
                                     <label>Notes</label>
                                     <textarea class="form-control summernote-simple"
-                                        readonly>{!! $shipping->notes !!}</textarea>
+                                        readonly>{{ $shipping->notes }}</textarea>
                                 </div>
                             </div>
                         </form>

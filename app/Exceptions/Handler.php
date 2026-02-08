@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Support\Arr;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
