@@ -43,7 +43,7 @@ class CartController extends Controller
         }
 
         // return $cart;
-        return redirect()->back()->with('danger', 'Artikel Berhasil Dihapus');
+        return redirect()->back()->with('success', 'Artikel Berhasil Ditambahkan');
     }
 
     public function delete($id)
