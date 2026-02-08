@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers\Front;
 
-use Illuminate\Contracts\Support\Renderable;
-use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        $bestSeller = Product::orderBy('sold','desc')->take(6)->get();
-        $new = Product::orderBy('created_at','desc')->take(6)->get();
+        $bestSeller = Cache::remember('home_best_seller', 3600, function () {
+            return Product::orderBy('sold', 'desc')->take(6)->get();
+        });
 
-        return view('front.home.index',compact('bestSeller','new'));
+        $new = Cache::remember('home_new_products', 3600, function () {
+            return Product::orderBy('created_at', 'desc')->take(6)->get();
+        });
+
+        return view('front.home.index', compact('bestSeller', 'new'));
     }
 }
