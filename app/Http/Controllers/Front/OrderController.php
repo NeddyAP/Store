@@ -32,7 +32,7 @@ class OrderController extends Controller
             'zip' => $request->zip,
             'email' => $request->email,
             'phone' => $request->phone,
-            'notes' => $request->notes,
+            'notes' => $request->notes ? strip_tags($request->notes) : null,
         ]);
 
         #Order
