@@ -16,8 +16,7 @@ class CartController extends Controller
 
     public function index()
     {
-        $carts = Cart::where('id_user', Auth::user()->id)->join('products', 'products.id', '=', 'carts.id_product')
-            ->select('carts.*', 'products.name', 'products.price', 'products.new_price', 'products.img', 'products.category')->get();
+        $carts = Cart::forUser(Auth::user()->id)->get();
 
         // return $carts;
         return view('front.cart.index', compact('carts'));
@@ -59,8 +58,7 @@ class CartController extends Controller
 
     public function checkout()
     {
-        $carts = Cart::where('id_user', Auth::user()->id)->join('products', 'products.id', '=', 'carts.id_product')
-            ->select('carts.*', 'products.name', 'products.price', 'products.new_price', 'products.img', 'products.category')->get();
+        $carts = Cart::forUser(Auth::user()->id)->get();
 
         return view('front.cart.checkout', compact('carts'));
     }
