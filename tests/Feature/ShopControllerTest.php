@@ -52,4 +52,27 @@ class ShopControllerTest extends TestCase
         // Assert we have some random products
         $this->assertGreaterThan(0, $viewRandom->count());
     }
+
+    /**
+     * Test that random products are limited to 20.
+     *
+     * @return void
+     */
+    public function test_shop_page_random_products_limit()
+    {
+        // Create 30 products
+        Product::factory()->count(30)->create();
+
+        // Make request to shop page
+        $response = $this->get(route('shop'));
+
+        // Assert status is 200
+        $response->assertStatus(200);
+
+        // Get view data
+        $viewRandom = $response->viewData('random');
+
+        // Assert that we have exactly 20 random products
+        $this->assertCount(20, $viewRandom);
+    }
 }

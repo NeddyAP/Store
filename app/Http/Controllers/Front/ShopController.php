@@ -11,7 +11,7 @@ class ShopController extends Controller
     public function index()
     {
         $products = Product::orderBy('created_at','desc')->paginate(6);
-        $random = Product::inRandomOrder()->get();
+        $random = Product::inRandomOrder()->take(20)->get();
         return view('front.shop.index', compact('products', 'random'));
     }
 
