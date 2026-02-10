@@ -43,4 +43,29 @@ class ShopControllerTest extends TestCase
         // Assert response is 404
         $response->assertStatus(404);
     }
+
+    /** @test */
+    public function test_index_method()
+    {
+        // Create products
+        Product::create([
+            'name' => 'Test Product 1',
+            'price' => 100,
+            'spec' => 'Test Spec',
+            'qty' => 10,
+            'category' => 'laptop',
+            'status' => 'Available',
+            'desc' => 'Test Description',
+            'img' => 'test1.jpg'
+        ]);
+
+        // Make a GET request
+        $response = $this->get(route('shop'));
+
+        // Assert response
+        $response->assertStatus(200);
+        $response->assertViewIs('front.shop.index');
+        $response->assertViewHas('products');
+        $response->assertViewHas('random');
+    }
 }
