@@ -18,7 +18,6 @@ class CartController extends Controller
     {
         $carts = Cart::forUser(Auth::user()->id)->get();
 
-        // return $carts;
         return view('front.cart.index', compact('carts'));
     }
 
@@ -26,7 +25,6 @@ class CartController extends Controller
     {
         $status = Cart::where('id_user', Auth::user()->id)->Where('id_product', $id)->first();
         $product = Product::find($id);
-        // return $product;
         if ($status) {
             $status->update([
                 'qty' => $status->qty + $request->qty,
@@ -41,13 +39,11 @@ class CartController extends Controller
             ]);
         }
 
-        // return $cart;
         return redirect()->back()->with('danger', 'Artikel Berhasil Dihapus');
     }
 
     public function delete($id)
     {
-        // return $id;
         $cart = Cart::where('id', $id)->where('id_user', Auth::user()->id)->first();
         if ($cart) {
             $cart->delete();
