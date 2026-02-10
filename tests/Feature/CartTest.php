@@ -74,4 +74,61 @@ class CartTest extends TestCase
         $response->assertStatus(302);
         $response->assertRedirect(route('login'));
     }
+
+    /**
+     * Test that user can delete their own cart item.
+     */
+    public function test_user_can_delete_own_cart_item(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['category' => 'phone']);
+        $cartItem = Cart::factory()->create([
+            'id_user' => $user->id,
+            'id_product' => $product->id,
+        ]);
+
+        $this->actingAs($user)
+             ->get(route('cart.delete', $cartItem->id))
+             ->assertRedirect();
+
+        $this->assertDatabaseMissing('carts', ['id' => $cartItem->id]);
+    }
+
+    /**
+     * Test that user cannot delete other user's cart item.
+     */
+    public function test_user_cannot_delete_other_user_cart_item(): void
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+        $product = Product::factory()->create(['category' => 'phone']);
+        $cartItem = Cart::factory()->create([
+            'id_user' => $user1->id,
+            'id_product' => $product->id,
+        ]);
+
+        $this->actingAs($user2)
+             ->get(route('cart.delete', $cartItem->id))
+             ->assertRedirect();
+
+        $this->assertDatabaseHas('carts', ['id' => $cartItem->id]);
+    }
+
+    /**
+     * Test that unauthenticated user cannot delete cart item.
+     */
+    public function test_unauthenticated_user_cannot_delete_cart_item(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['category' => 'phone']);
+        $cartItem = Cart::factory()->create([
+            'id_user' => $user->id,
+            'id_product' => $product->id,
+        ]);
+
+        $this->get(route('cart.delete', $cartItem->id))
+             ->assertRedirect(route('login'));
+
+        $this->assertDatabaseHas('carts', ['id' => $cartItem->id]);
+    }
 }
