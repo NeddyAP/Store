@@ -23,23 +23,31 @@ class CartController extends Controller
 
     public function add(Request $request, $id)
     {
-        $status = Cart::where('id_user', Auth::user()->id)->Where('id_product', $id)->first();
-        $product = Product::find($id);
+        $request->validate([
+            'qty' => 'required|integer|min:1',
+        ]);
+
+        $status = Cart::where('id_user', Auth::user()->id)->where('id_product', $id)->first();
+        $product = Product::findOrFail($id);
+        $price = $product->new_price ?? $product->price;
+
         if ($status) {
+            $newQty = $status->qty + $request->qty;
             $status->update([
-                'qty' => $status->qty + $request->qty,
+                'qty' => $newQty,
+                'total' => $newQty * $price,
             ]);
         } else {
-            $cart = Cart::create([
+            Cart::create([
                 'id_user' => Auth::user()->id,
                 'id_product' => $id,
                 'color' => $request->color,
                 'qty' => $request->qty,
-                'total' => $product->price * $request->qty,
+                'total' => $price * $request->qty,
             ]);
         }
 
-        return redirect()->back()->with('danger', 'Artikel Berhasil Dihapus');
+        return redirect()->back()->with('success', 'Artikel Berhasil Ditambahkan');
     }
 
     public function delete($id)
