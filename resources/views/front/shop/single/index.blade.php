@@ -75,7 +75,7 @@
             <div class="col-md-12 block-3 products-wrap">
                 <div class="nonloop-block-3 owl-carousel">
 
-                    @foreach ($random->take(6) as $product)
+                    @foreach ($random as $product)
                     <div class="product">
                         <a href="{{ route('shop.detail', $product->id) }}" class="item">
                             @if ($product->new_price)

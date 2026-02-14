@@ -17,7 +17,7 @@ class ShopController extends Controller
     public function show($id)
     {
         $product = Product::findOrFail($id);
-        $random = Product::inRandomOrder()->get();
+        $random = Product::inRandomOrder()->take(6)->get();
         return view('front.shop.single.index', compact('product', 'random'));
     }
 }
