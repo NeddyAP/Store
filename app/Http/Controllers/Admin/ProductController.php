@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Product;
-use File;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Image;
 
 class ProductController extends Controller
@@ -96,7 +96,7 @@ class ProductController extends Controller
             'price' => $request->price,
             'spec' => $request->spec,
             'qty' => $request->qty,
-            'desc' => clean($request->desc),
+            'desc' => $this->sanitizeDescription($request->desc),
             'color' => $request->color,
             'img' => $filename,
         ]);
@@ -114,15 +114,14 @@ class ProductController extends Controller
 
     public function edit($id)
     {
-        $products = Product::all();
-        $product = $products->find($id);
+        $product = Product::findOrFail($id);
 
         return view('admin.product.actions.edit', compact('product'));
     }
 
     public function update(Request $request, $id)
     {
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
         $request->validate([
             'name' => 'required',
             'category' => 'required',
@@ -190,7 +189,7 @@ class ProductController extends Controller
             'new_price' => $request->new_price,
             'spec' => $request->spec,
             'qty' => $request->qty,
-            'desc' => clean($request->desc),
+            'desc' => $this->sanitizeDescription($request->desc),
             'color' => $request->color,
         ]);
         $tags = explode(',', $request->color);
@@ -201,7 +200,7 @@ class ProductController extends Controller
 
     public function trash($id)
     {
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
         $product->update([
             'status' => 'Trash',
         ]);
@@ -211,8 +210,15 @@ class ProductController extends Controller
 
     public function destroy($id)
     {
-        Product::find($id)->delete();
+        Product::findOrFail($id)->delete();
 
         return redirect()->back();
+    }
+
+    private function sanitizeDescription(string $description): string
+    {
+        $withoutScripts = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $description) ?? '';
+
+        return trim(strip_tags($withoutScripts, '<p><br><ul><ol><li><strong><em><b><i>'));
     }
 }
