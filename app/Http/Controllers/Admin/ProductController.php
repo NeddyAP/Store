@@ -217,8 +217,15 @@ class ProductController extends Controller
 
     private function sanitizeDescription(string $description): string
     {
-        $withoutScripts = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $description) ?? '';
+        $withoutScripts = preg_replace('/<(script|style)\b[^>]*>.*?<\/\1>/is', '', $description) ?? '';
+        $withoutDangerousProtocols = preg_replace('/\b(href|src)\s*=\s*([\'"])\s*(javascript|data):.*?\2/i', '', $withoutScripts) ?? '';
+        $allowedTags = strip_tags($withoutDangerousProtocols, '<p><br><ul><ol><li><strong><em><b><i>');
+        $normalizedTags = preg_replace(
+            '/<(\/?)(p|br|ul|ol|li|strong|em|b|i)(?:\s[^>]*)?>/i',
+            '<$1$2>',
+            $allowedTags
+        ) ?? '';
 
-        return trim(strip_tags($withoutScripts, '<p><br><ul><ol><li><strong><em><b><i>'));
+        return trim($normalizedTags);
     }
 }
