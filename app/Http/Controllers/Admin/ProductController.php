@@ -12,6 +12,8 @@ use Image;
 
 class ProductController extends Controller
 {
+    private const HTML_SANITIZER_LIBXML_FLAGS = LIBXML_HTML_NODEFDTD | LIBXML_NONET | LIBXML_NOERROR;
+
     public function index()
     {
         $products = Product::orderBy('created_at', 'desc')->paginate(18);
@@ -225,12 +227,11 @@ class ProductController extends Controller
     {
         $allowedTags = ['p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i'];
         $document = new DOMDocument('1.0', 'UTF-8');
-        $wrappedHtml = '<div>'.$description.'</div>';
         libxml_use_internal_errors(true);
-        $document->loadHTML('<?xml encoding="UTF-8">'.$wrappedHtml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET | LIBXML_NOERROR);
+        $document->loadHTML('<?xml encoding="UTF-8">'.$description, self::HTML_SANITIZER_LIBXML_FLAGS);
         libxml_clear_errors();
 
-        $root = $document->getElementsByTagName('div')->item(0);
+        $root = $document->getElementsByTagName('body')->item(0);
 
         if ($root === null) {
             return trim(strip_tags($description));
