@@ -187,11 +187,12 @@ class OrderControllerTest extends TestCase
 
         $response = $this->post(route('order.create'), $requestData);
 
-        $response->assertStatus(302);
-        $response->assertSessionHasErrors('total');
+        $response->assertStatus(200);
+        $response->assertViewIs('front.order.thankyou');
 
-        $this->assertDatabaseMissing('orders', [
+        $this->assertDatabaseHas('orders', [
             'id_user' => $user->id,
+            'total' => 180,
         ]);
     }
 

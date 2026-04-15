@@ -24,7 +24,6 @@ class StoreOrderRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:120'],
             'phone' => ['required', 'string', 'max:40'],
             'notes' => ['nullable', 'string', 'max:5000'],
-            'total' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

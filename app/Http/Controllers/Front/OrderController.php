@@ -10,7 +10,6 @@ use App\Models\Shipping;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -28,12 +27,6 @@ class OrderController extends Controller
             $carts = Cart::where('id_user', $userId)->get();
             $trustedTotal = (float) $carts->sum('total');
 
-            if (isset($validated['total']) && (float) $validated['total'] !== $trustedTotal) {
-                throw ValidationException::withMessages([
-                    'total' => 'Invalid order total.',
-                ]);
-            }
-
             $addressTwo = $validated['address2'] ?? null;
 
             $shipping = Shipping::create([
@@ -42,7 +35,7 @@ class OrderController extends Controller
                 'name' => $validated['name'],
                 'company_name' => $validated['company_name'] ?? null,
                 'address' => filled($addressTwo)
-                    ? $validated['address'].', '.trim($addressTwo)
+                    ? $validated['address'].', '.$addressTwo
                     : $validated['address'],
                 'province' => $validated['province'],
                 'zip' => $validated['zip'],
