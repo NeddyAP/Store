@@ -218,6 +218,9 @@ class ProductController extends Controller
         return redirect()->back();
     }
 
+    /**
+     * Sanitize product HTML to an allowlist of formatting tags and no attributes.
+     */
     private function sanitizeDescription(string $description): string
     {
         $allowedTags = ['p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i'];
@@ -244,6 +247,11 @@ class ProductController extends Controller
         return trim($html);
     }
 
+    /**
+     * Walk DOM nodes in reverse order to safely replace or remove disallowed nodes in-place.
+     *
+     * @param  array<int, string>  $allowedTags
+     */
     private function sanitizeNode(DOMNode $node, array $allowedTags): void
     {
         for ($index = $node->childNodes->length - 1; $index >= 0; $index--) {
