@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Product;
+use DOMDocument;
+use DOMElement;
+use DOMNode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Image;
@@ -217,15 +220,67 @@ class ProductController extends Controller
 
     private function sanitizeDescription(string $description): string
     {
-        $withoutScripts = preg_replace('/<(script|style)\b[^>]*>.*?<\/\1>/is', '', $description) ?? '';
-        $withoutDangerousProtocols = preg_replace('/\b(href|src)\s*=\s*([\'"])\s*(javascript|data):.*?\2/i', '', $withoutScripts) ?? '';
-        $allowedTags = strip_tags($withoutDangerousProtocols, '<p><br><ul><ol><li><strong><em><b><i>');
-        $normalizedTags = preg_replace(
-            '/<(\/?)(p|br|ul|ol|li|strong|em|b|i)(?:\s[^>]*)?>/i',
-            '<$1$2>',
-            $allowedTags
-        ) ?? '';
+        $allowedTags = ['p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i'];
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $wrappedHtml = '<div>'.$description.'</div>';
+        libxml_use_internal_errors(true);
+        $document->loadHTML('<?xml encoding="UTF-8">'.$wrappedHtml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET);
+        libxml_clear_errors();
 
-        return trim($normalizedTags);
+        $root = $document->getElementsByTagName('div')->item(0);
+
+        if ($root === null) {
+            return trim(strip_tags($description));
+        }
+
+        $this->sanitizeNode($root, $allowedTags);
+
+        $html = '';
+
+        foreach ($root->childNodes as $childNode) {
+            $html .= $document->saveHTML($childNode);
+        }
+
+        return trim($html);
+    }
+
+    private function sanitizeNode(DOMNode $node, array $allowedTags): void
+    {
+        for ($index = $node->childNodes->length - 1; $index >= 0; $index--) {
+            $child = $node->childNodes->item($index);
+
+            if (! $child instanceof DOMNode) {
+                continue;
+            }
+
+            if ($child instanceof DOMElement) {
+                $tag = strtolower($child->tagName);
+
+                if (! in_array($tag, $allowedTags, true)) {
+                    if (in_array($tag, ['script', 'style'], true)) {
+                        $node->removeChild($child);
+
+                        continue;
+                    }
+
+                    $replacementText = $child->ownerDocument->createTextNode($child->textContent);
+                    $node->replaceChild($replacementText, $child);
+
+                    continue;
+                }
+
+                while ($child->attributes->length > 0) {
+                    $attribute = $child->attributes->item(0);
+
+                    if ($attribute === null) {
+                        break;
+                    }
+
+                    $child->removeAttributeNode($attribute);
+                }
+            }
+
+            $this->sanitizeNode($child, $allowedTags);
+        }
     }
 }
