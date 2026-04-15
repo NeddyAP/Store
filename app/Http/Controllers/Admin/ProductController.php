@@ -224,7 +224,7 @@ class ProductController extends Controller
         $document = new DOMDocument('1.0', 'UTF-8');
         $wrappedHtml = '<div>'.$description.'</div>';
         libxml_use_internal_errors(true);
-        $document->loadHTML('<?xml encoding="UTF-8">'.$wrappedHtml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET);
+        $document->loadHTML('<?xml encoding="UTF-8">'.$wrappedHtml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET | LIBXML_NOERROR);
         libxml_clear_errors();
 
         $root = $document->getElementsByTagName('div')->item(0);
@@ -248,10 +248,6 @@ class ProductController extends Controller
     {
         for ($index = $node->childNodes->length - 1; $index >= 0; $index--) {
             $child = $node->childNodes->item($index);
-
-            if (! $child instanceof DOMNode) {
-                continue;
-            }
 
             if ($child instanceof DOMElement) {
                 $tag = strtolower($child->tagName);
