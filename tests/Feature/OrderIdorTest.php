@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 class OrderIdorTest extends TestCase
 {
@@ -46,7 +46,7 @@ class OrderIdorTest extends TestCase
             'status' => 'Publish',
             'img' => 'test.jpg',
             'desc' => 'Test Description',
-            'color' => 'Red'
+            'color' => 'Red',
         ]);
 
         // Create a cart item for the victim
@@ -54,6 +54,14 @@ class OrderIdorTest extends TestCase
             'id_user' => $victim->id,
             'id_product' => $product->id,
             'color' => 'Red',
+            'qty' => 1,
+            'total' => 90,
+        ]);
+
+        Cart::create([
+            'id_user' => $attacker->id,
+            'id_product' => $product->id,
+            'color' => 'Blue',
             'qty' => 1,
             'total' => 90,
         ]);
@@ -69,18 +77,17 @@ class OrderIdorTest extends TestCase
             'email' => 'attacker@example.com',
             'phone' => '1234567890',
             'notes' => 'Test Notes',
-            'total' => 100
+            'total' => 90,
         ];
 
         // 2. Act
         // Attacker logs in
         $this->actingAs($attacker);
 
-        // Attacker tries to create order using Victim's ID
-        // The URL uses Victim's ID.
-        // If vulnerable, this will create order for Victim and delete Victim's cart.
-        // If secure (fixed), this should create order for Attacker (ignoring URL ID) and NOT touch Victim's cart.
-        $response = $this->post(route('order.create', ['id' => $victim->id]), $payload);
+        // Attacker tries to create an order while a victim cart exists.
+        // If vulnerable, this could create an order for Victim and delete Victim's cart.
+        // If secure (fixed), this should create order for Attacker and NOT touch Victim's cart.
+        $response = $this->post(route('order.create'), $payload);
 
         // 3. Assert
         // Verify that the Victim's cart was NOT deleted

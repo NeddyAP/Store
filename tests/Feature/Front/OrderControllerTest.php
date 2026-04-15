@@ -58,7 +58,7 @@ class OrderControllerTest extends TestCase
         ];
 
         // Make POST request
-        $response = $this->post(route('order.create', ['id' => $user->id]), $requestData);
+        $response = $this->post(route('order.create'), $requestData);
 
         // Assert response
         $response->assertStatus(200);
@@ -126,7 +126,7 @@ class OrderControllerTest extends TestCase
         ];
 
         // Make POST request
-        $response = $this->post(route('order.create', ['id' => $user->id]), $requestData);
+        $response = $this->post(route('order.create'), $requestData);
 
         // Assert response
         $response->assertStatus(200);
@@ -149,13 +149,61 @@ class OrderControllerTest extends TestCase
     }
 
     /**
+     * Test that order total is derived from cart items, not client payload.
+     *
+     * @return void
+     */
+    public function test_order_total_is_calculated_from_user_cart()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $product = Product::factory()->create([
+            'price' => 100,
+            'new_price' => 90,
+        ]);
+
+        Cart::factory()->create([
+            'id_user' => $user->id,
+            'id_product' => $product->id,
+            'qty' => '2',
+            'total' => 180,
+            'color' => 'Blue',
+        ]);
+
+        $requestData = [
+            'country' => 'Test Country',
+            'name' => 'Test User',
+            'company_name' => 'Test Company',
+            'address' => 'Test Address',
+            'address2' => 'Apt 1',
+            'province' => 'Test Province',
+            'zip' => '12345',
+            'email' => 'test@example.com',
+            'phone' => '1234567890',
+            'notes' => 'Test Notes',
+            'total' => 1,
+        ];
+
+        $response = $this->post(route('order.create'), $requestData);
+
+        $response->assertStatus(200);
+        $response->assertViewIs('front.order.thankyou');
+
+        $this->assertDatabaseHas('orders', [
+            'id_user' => $user->id,
+            'total' => 180,
+        ]);
+    }
+
+    /**
      * Test that an unauthenticated user cannot create an order.
      *
      * @return void
      */
     public function test_unauthenticated_user_cannot_create_order()
     {
-        $response = $this->post(route('order.create', ['id' => 1]), []);
+        $response = $this->post(route('order.create'), []);
 
         $response->assertStatus(302);
         $response->assertRedirect(route('login'));

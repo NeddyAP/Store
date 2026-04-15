@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\Product;
-use File;
+use DOMDocument;
+use DOMElement;
+use DOMNode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Image;
 
 class ProductController extends Controller
 {
+    private const HTML_SANITIZER_LIBXML_FLAGS = LIBXML_HTML_NODEFDTD | LIBXML_NONET | LIBXML_NOERROR;
+
     public function index()
     {
         $products = Product::orderBy('created_at', 'desc')->paginate(18);
@@ -45,7 +50,7 @@ class ProductController extends Controller
             'price' => 'required|integer',
             'spec' => 'required|min:3',
             'qty' => 'required|integer',
-            'desc' => 'required',
+            'desc' => 'required|string|max:65535',
             'img' => 'required|image|max:2048',
         ]);
 
@@ -96,7 +101,7 @@ class ProductController extends Controller
             'price' => $request->price,
             'spec' => $request->spec,
             'qty' => $request->qty,
-            'desc' => clean($request->desc),
+            'desc' => $this->sanitizeDescription($request->desc),
             'color' => $request->color,
             'img' => $filename,
         ]);
@@ -114,15 +119,14 @@ class ProductController extends Controller
 
     public function edit($id)
     {
-        $products = Product::all();
-        $product = $products->find($id);
+        $product = Product::findOrFail($id);
 
         return view('admin.product.actions.edit', compact('product'));
     }
 
     public function update(Request $request, $id)
     {
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
         $request->validate([
             'name' => 'required',
             'category' => 'required',
@@ -130,7 +134,7 @@ class ProductController extends Controller
             'new_price' => 'integer',
             'spec' => 'required|min:3',
             'qty' => 'required|integer',
-            'desc' => 'required',
+            'desc' => 'required|string|max:65535',
             'color' => 'required',
             'img' => 'image|max:2048',
         ]);
@@ -190,7 +194,7 @@ class ProductController extends Controller
             'new_price' => $request->new_price,
             'spec' => $request->spec,
             'qty' => $request->qty,
-            'desc' => clean($request->desc),
+            'desc' => $this->sanitizeDescription($request->desc),
             'color' => $request->color,
         ]);
         $tags = explode(',', $request->color);
@@ -201,7 +205,7 @@ class ProductController extends Controller
 
     public function trash($id)
     {
-        $product = Product::find($id);
+        $product = Product::findOrFail($id);
         $product->update([
             'status' => 'Trash',
         ]);
@@ -211,8 +215,82 @@ class ProductController extends Controller
 
     public function destroy($id)
     {
-        Product::find($id)->delete();
+        Product::findOrFail($id)->delete();
 
         return redirect()->back();
+    }
+
+    /**
+     * Sanitize product HTML to an allowlist of formatting tags and no attributes.
+     */
+    private function sanitizeDescription(string $description): string
+    {
+        $allowedTags = ['p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i'];
+        $document = new DOMDocument('1.0', 'UTF-8');
+        $previousErrors = libxml_use_internal_errors(true);
+
+        try {
+            $document->loadHTML('<?xml encoding="UTF-8">'.$description, self::HTML_SANITIZER_LIBXML_FLAGS);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrors);
+        }
+
+        $root = $document->getElementsByTagName('body')->item(0);
+
+        if ($root === null) {
+            return trim(strip_tags($description));
+        }
+
+        $this->sanitizeNode($root, $allowedTags);
+
+        $html = '';
+
+        foreach ($root->childNodes as $childNode) {
+            $html .= $document->saveHTML($childNode);
+        }
+
+        return trim($html);
+    }
+
+    /**
+     * Walk DOM nodes in reverse order to safely replace or remove disallowed nodes in-place.
+     *
+     * @param  array<int, string>  $allowedTags
+     */
+    private function sanitizeNode(DOMNode $node, array $allowedTags): void
+    {
+        for ($index = $node->childNodes->length - 1; $index >= 0; $index--) {
+            $child = $node->childNodes->item($index);
+
+            if ($child instanceof DOMElement) {
+                $tag = strtolower($child->tagName);
+
+                if (! in_array($tag, $allowedTags, true)) {
+                    if (in_array($tag, ['script', 'style'], true)) {
+                        $node->removeChild($child);
+
+                        continue;
+                    }
+
+                    $replacementText = $child->ownerDocument->createTextNode($child->textContent);
+                    $node->replaceChild($replacementText, $child);
+
+                    continue;
+                }
+
+                while ($child->attributes->length > 0) {
+                    $attribute = $child->attributes->item(0);
+
+                    if ($attribute === null) {
+                        break;
+                    }
+
+                    $child->removeAttributeNode($attribute);
+                }
+            }
+
+            $this->sanitizeNode($child, $allowedTags);
+        }
     }
 }
