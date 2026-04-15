@@ -14,7 +14,7 @@
 
 <div class="site-section">
     <div class="container">
-        <form action="{{ route('order.create', Auth::user()->id) }}" method="post">
+        <form action="{{ route('order.create') }}" method="post">
             @csrf
             <div class="row mb-5">
                 <div class="col-md-12">
@@ -325,7 +325,6 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <input type="text" name="total" value="{{$carts->sum('total')}}" hidden>
                                     <button class="btn btn-primary btn-lg btn-block">Place Order</button>
                                 </div>
 

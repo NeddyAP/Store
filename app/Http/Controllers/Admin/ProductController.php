@@ -50,7 +50,7 @@ class ProductController extends Controller
             'price' => 'required|integer',
             'spec' => 'required|min:3',
             'qty' => 'required|integer',
-            'desc' => 'required',
+            'desc' => 'required|string|max:65535',
             'img' => 'required|image|max:2048',
         ]);
 
@@ -134,7 +134,7 @@ class ProductController extends Controller
             'new_price' => 'integer',
             'spec' => 'required|min:3',
             'qty' => 'required|integer',
-            'desc' => 'required',
+            'desc' => 'required|string|max:65535',
             'color' => 'required',
             'img' => 'image|max:2048',
         ]);
@@ -227,9 +227,14 @@ class ProductController extends Controller
     {
         $allowedTags = ['p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'b', 'i'];
         $document = new DOMDocument('1.0', 'UTF-8');
-        libxml_use_internal_errors(true);
-        $document->loadHTML('<?xml encoding="UTF-8">'.$description, self::HTML_SANITIZER_LIBXML_FLAGS);
-        libxml_clear_errors();
+        $previousErrors = libxml_use_internal_errors(true);
+
+        try {
+            $document->loadHTML('<?xml encoding="UTF-8">'.$description, self::HTML_SANITIZER_LIBXML_FLAGS);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrors);
+        }
 
         $root = $document->getElementsByTagName('body')->item(0);
 

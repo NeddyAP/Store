@@ -10,6 +10,7 @@ use App\Models\Shipping;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -24,13 +25,24 @@ class OrderController extends Controller
         $validated = $request->validated();
 
         DB::transaction(function () use ($validated, $userId): void {
+            $carts = Cart::where('id_user', $userId)->get();
+            $trustedTotal = (float) $carts->sum('total');
+
+            if (isset($validated['total']) && (float) $validated['total'] !== $trustedTotal) {
+                throw ValidationException::withMessages([
+                    'total' => 'Invalid order total.',
+                ]);
+            }
+
+            $addressTwo = $validated['address2'] ?? null;
+
             $shipping = Shipping::create([
                 'id_user' => $userId,
                 'country' => $validated['country'],
                 'name' => $validated['name'],
                 'company_name' => $validated['company_name'] ?? null,
-                'address' => isset($validated['address2']) && $validated['address2'] !== ''
-                    ? $validated['address'].', '.$validated['address2']
+                'address' => filled($addressTwo)
+                    ? $validated['address'].', '.trim($addressTwo)
                     : $validated['address'],
                 'province' => $validated['province'],
                 'zip' => $validated['zip'],
@@ -41,15 +53,12 @@ class OrderController extends Controller
 
             $order = Order::create([
                 'code' => 'TCP-'.Str::random(5).now()->format('-mdY'),
-                'total' => $validated['total'],
+                'total' => $trustedTotal,
                 'id_user' => $userId,
                 'id_shipping' => $shipping->id,
                 'status_product' => 'Proccess',
                 'status_user' => 'Proccess',
             ]);
-
-            $allCart = Cart::forUser($userId);
-            $carts = $allCart->get();
 
             foreach ($carts as $cart) {
                 orderDetail::create([
@@ -62,7 +71,7 @@ class OrderController extends Controller
                 ]);
             }
 
-            $allCart->delete();
+            Cart::where('id_user', $userId)->delete();
         });
 
         return view('front.order.thankyou');

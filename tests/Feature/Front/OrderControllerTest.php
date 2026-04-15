@@ -149,6 +149,53 @@ class OrderControllerTest extends TestCase
     }
 
     /**
+     * Test that order total is derived from cart items, not client payload.
+     *
+     * @return void
+     */
+    public function test_order_total_is_calculated_from_user_cart()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $product = Product::factory()->create([
+            'price' => 100,
+            'new_price' => 90,
+        ]);
+
+        Cart::factory()->create([
+            'id_user' => $user->id,
+            'id_product' => $product->id,
+            'qty' => '2',
+            'total' => 180,
+            'color' => 'Blue',
+        ]);
+
+        $requestData = [
+            'country' => 'Test Country',
+            'name' => 'Test User',
+            'company_name' => 'Test Company',
+            'address' => 'Test Address',
+            'address2' => 'Apt 1',
+            'province' => 'Test Province',
+            'zip' => '12345',
+            'email' => 'test@example.com',
+            'phone' => '1234567890',
+            'notes' => 'Test Notes',
+            'total' => 1,
+        ];
+
+        $response = $this->post(route('order.create'), $requestData);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors('total');
+
+        $this->assertDatabaseMissing('orders', [
+            'id_user' => $user->id,
+        ]);
+    }
+
+    /**
      * Test that an unauthenticated user cannot create an order.
      *
      * @return void

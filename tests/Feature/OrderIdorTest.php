@@ -58,6 +58,14 @@ class OrderIdorTest extends TestCase
             'total' => 90,
         ]);
 
+        Cart::create([
+            'id_user' => $attacker->id,
+            'id_product' => $product->id,
+            'color' => 'Blue',
+            'qty' => 1,
+            'total' => 90,
+        ]);
+
         $payload = [
             'country' => 'Test Country',
             'name' => 'Attacker Name',
@@ -69,7 +77,7 @@ class OrderIdorTest extends TestCase
             'email' => 'attacker@example.com',
             'phone' => '1234567890',
             'notes' => 'Test Notes',
-            'total' => 100,
+            'total' => 90,
         ];
 
         // 2. Act

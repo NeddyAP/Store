@@ -36,7 +36,7 @@ Route::post('/shop/{id}/add', [CartController::class, 'add'])->name('cart.add');
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
 Route::get('/cart/{id}/delete', [CartController::class, 'delete'])->name('cart.delete');
 
-// Proccess
+// Process
 Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 
 // Order
