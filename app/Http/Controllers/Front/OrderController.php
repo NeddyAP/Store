@@ -18,7 +18,7 @@ class OrderController extends Controller
         $this->middleware('auth');
     }
 
-    public function create(StoreOrderRequest $request, int $_id)
+    public function create(StoreOrderRequest $request)
     {
         $userId = Auth::id();
         $validated = $request->validated();
@@ -29,7 +29,9 @@ class OrderController extends Controller
                 'country' => $validated['country'],
                 'name' => $validated['name'],
                 'company_name' => $validated['company_name'] ?? null,
-                'address' => $validated['address'].', '.($validated['address2'] ?? ''),
+                'address' => isset($validated['address2']) && $validated['address2'] !== ''
+                    ? $validated['address'].', '.$validated['address2']
+                    : $validated['address'],
                 'province' => $validated['province'],
                 'zip' => $validated['zip'],
                 'email' => $validated['email'],
