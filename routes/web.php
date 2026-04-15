@@ -40,7 +40,7 @@ Route::get('/cart/{id}/delete', [CartController::class, 'delete'])->name('cart.d
 Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 
 // Order
-Route::post('/order/{id}/create', [OrderController::class, 'create'])->name('order.create');
+Route::post('/order/create', [OrderController::class, 'create'])->name('order.create');
 
 Route::get('/contact', function () {
     return view('front.contact.index');

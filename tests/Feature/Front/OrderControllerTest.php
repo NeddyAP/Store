@@ -58,7 +58,7 @@ class OrderControllerTest extends TestCase
         ];
 
         // Make POST request
-        $response = $this->post(route('order.create', ['id' => $user->id]), $requestData);
+        $response = $this->post(route('order.create'), $requestData);
 
         // Assert response
         $response->assertStatus(200);
@@ -126,7 +126,7 @@ class OrderControllerTest extends TestCase
         ];
 
         // Make POST request
-        $response = $this->post(route('order.create', ['id' => $user->id]), $requestData);
+        $response = $this->post(route('order.create'), $requestData);
 
         // Assert response
         $response->assertStatus(200);
@@ -155,7 +155,7 @@ class OrderControllerTest extends TestCase
      */
     public function test_unauthenticated_user_cannot_create_order()
     {
-        $response = $this->post(route('order.create', ['id' => 1]), []);
+        $response = $this->post(route('order.create'), []);
 
         $response->assertStatus(302);
         $response->assertRedirect(route('login'));
